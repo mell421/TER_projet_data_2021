@@ -1,0 +1,13 @@
+name: TER_books_a
+title: TER_books_a
+username:
+account: mell421
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4235173
+bundleId: 4684127
+url: https://mell421.shinyapps.io/TER_books_a/
+when: 1622994111.95436
+lastSyncTime: 1622994111.95436
+asMultiple: FALSE
+asStatic: FALSE
