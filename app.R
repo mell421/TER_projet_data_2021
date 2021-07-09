@@ -13,16 +13,16 @@ if(require(shiny)){
         sidebarLayout(
             sidebarPanel(
                 selectInput("fct","source:",
-                            list("hp"="hp",
+                            list("demofreq"="demofreq",
+                                 "demofreqc"="demofreqc",
+                                 "hp"="hp",
                                  "spring"="spring",
                                  "texte"="texte",
                                  "file"="file",
                                  "sheet"="file2"
                             )
                 ),
-                textInput("file", "file address(txt/md):","./txt/"),
-                textInput("file2", "your file address(sheets):","https://docs.google.com/spreadsheets/d/"),
-                textAreaInput("texte","text:",""),
+
                 selectInput("form","form:",
                             list("circle"="circle",
                                  "cardioid"="cardioid",
@@ -33,6 +33,16 @@ if(require(shiny)){
                                  "star"="star"
                             )
                 ),
+                conditionalPanel(condition = "input.fct == 'texte'",
+                    textAreaInput("texte","text:","")
+                ),
+                conditionalPanel(condition = "input.fct == 'file'",
+                    textInput("file", "file address(txt/md):","./txt/")
+                ),
+                conditionalPanel(condition = "input.fct == 'file2'",
+                    textInput("file2", "your file address(sheets):","https://docs.google.com/spreadsheets/d/")
+                ),
+
                 numericInput(inputId ="size", 'freq min in the table', 1),
                 numericInput(inputId ="size3", 'nb in barplot', 30),
 
@@ -52,6 +62,9 @@ if(require(shiny)){
                     ),
                     tabPanel("barplot",
                              plotOutput('barplot')
+                    ),
+                    tabPanel("heat",
+                             plotOutput('heat')
                     )
                 )
 
@@ -66,7 +79,15 @@ if(require(shiny)){
     # Define the server code
     server <- function(input, output) {
         output$wordcloud2 <- renderWordcloud2({
-            if(input$fct == "hp"){
+            if(input$fct == "demofreq"){
+                data <- demoFreq
+                data <- data %>% filter(freq >= input$size)
+                return(wordcloud2(data, color = input$color, size=1,backgroundColor=input$bgc,shape=input$form))
+            } else if(input$fct == "demofreqc"){
+                data <- demoFreqC
+                data <- data %>% filter(freq >= input$size)
+                return(wordcloud2(data, color = input$color, size=1,backgroundColor=input$bgc,shape=input$form))
+            } else if(input$fct == "hp"){
                 hp <- read_lines("./txt/HP1.txt")
                 texte <- hp
             } else if(input$fct == "spring"){
@@ -127,7 +148,11 @@ if(require(shiny)){
         })
 
         output$table <- renderDataTable({
-            if(input$fct == "hp"){
+            if(input$fct == "demofreq"){
+                return(demoFreq)
+            } else if(input$fct == "demofreqc"){
+                return(demoFreqC)
+            } else if(input$fct == "hp"){
                 hp <- read_lines("./txt/HP1.txt")
                 texte <- hp
             } else if(input$fct == "spring"){
@@ -187,7 +212,12 @@ if(require(shiny)){
             main(texte)
         })
         output$barplot <- renderPlot({
-            if(input$fct == "hp"){
+            if(input$fct == "demofreq"){
+                return(barplot(demoFreq$freq, las = 2, names.arg = demoFreq$word,
+                               col =brewer.pal(8, "Dark2"), main = paste("Top",max,input$fct,sep = " "),
+                               ylab = "Word frequencies"))
+
+            } else if(input$fct == "hp"){
                 hp <- readLines("./txt/HP1.txt")
                 texte <- hp
             } else if(input$fct == "spring"){
@@ -248,6 +278,11 @@ if(require(shiny)){
         # output$name <- renderDataTable({
 
         # })
+        output$heat <- renderPlot({
+            data <- as.matrix(eurodist)
+            # Default Heatmap
+            heatmap(data, scale="column")
+        })
 
 
     }
