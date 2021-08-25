@@ -6,6 +6,7 @@ if(require(shiny)){
     #library('rsconnect')
     suppressWarnings(source("./fctR/sources.R"))
     suppressWarnings(library(tidyverse))
+    library(leaflet)
 
     # Define the UI
     ui <- fluidPage(
@@ -22,7 +23,6 @@ if(require(shiny)){
                                  "sheet"="file2"
                             )
                 ),
-
                 selectInput("form","form:",
                             list("circle"="circle",
                                  "cardioid"="cardioid",
@@ -39,6 +39,9 @@ if(require(shiny)){
                 conditionalPanel(condition = "input.fct == 'file'",
                     textInput("file", "file address(txt/md):","./txt/")
                 ),
+                conditionalPanel(condition = "input.fct == 'filePicker'",
+                                 textInput("filePicker", "file (txt/md):")
+                ),
                 conditionalPanel(condition = "input.fct == 'file2'",
                     textInput("file2", "your file address(sheets):","https://docs.google.com/spreadsheets/d/")
                 ),
@@ -49,7 +52,20 @@ if(require(shiny)){
                 textInput(inputId ="color","color(random-light,random-dark,other)", "random-light"),
 
 
-                textInput(inputId ="bgc","backgroundcolor", "black")
+                textInput(inputId ="bgc","backgroundcolor", "black"),
+
+                selectInput("maps","maps:",
+                            list("Nasa"="NASAGIBS.ViirsEarthAtNight2012",
+                                 "Google map"="Esri.WorldImagery",
+                                 "Gray"="Esri.WorldGrayCanvas",
+                                 "Terrain"="Esri.WorldTerrain",
+                                 "Topo Map"="Esri.WorldTopoMap"
+                            )
+                ),
+                numericInput(inputId ="zoomM", 'niveau de zoom', 4),
+
+
+
             ),
             mainPanel(
                 tabsetPanel(
@@ -60,8 +76,8 @@ if(require(shiny)){
                     tabPanel("table",
                              dataTableOutput('table')
                     ),
-                    tabPanel("barplot",
-                             plotOutput('barplot')
+                    tabPanel("maps",
+                             leafletOutput('maps')
                     ),
                     tabPanel("heat",
                              plotOutput('heat')
@@ -278,6 +294,15 @@ if(require(shiny)){
         # output$name <- renderDataTable({
 
         # })
+        output$maps <- renderLeaflet({
+
+            m <- leaflet() %>%
+                addTiles() %>%
+                setView( lng = 2.34, lat = 48.85, zoom = input$zoomM ) %>%
+                addProviderTiles(input$maps)
+            m
+        })
+
         output$heat <- renderPlot({
             data <- as.matrix(eurodist)
             # Default Heatmap
