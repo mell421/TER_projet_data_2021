@@ -5,9 +5,10 @@ account: mell421
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 4235173
-bundleId: 4687447
+bundleId: 4969878
 url: https://mell421.shinyapps.io/TER_books_a/
-when: 1623070155.97557
-lastSyncTime: 1623070155.97557
+when: 1630033724.21984
+lastSyncTime: 1630033724.21984
 asMultiple: FALSE
 asStatic: FALSE
+ignoredFiles: .RData|data

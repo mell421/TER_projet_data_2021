@@ -47,7 +47,6 @@ if(require(shiny)){
                 ),
 
                 numericInput(inputId ="size", 'freq min in the table', 1),
-                numericInput(inputId ="size3", 'nb in barplot', 30),
 
                 textInput(inputId ="color","color(random-light,random-dark,other)", "random-light"),
 
@@ -227,7 +226,7 @@ if(require(shiny)){
             }
             main(texte)
         })
-        output$barplot <- renderPlot({
+        output$analyseS <- renderPlot({
             if(input$fct == "demofreq"){
                 return(barplot(demoFreq$freq, las = 2, names.arg = demoFreq$word,
                                col =brewer.pal(8, "Dark2"), main = paste("Top",max,input$fct,sep = " "),
@@ -250,46 +249,7 @@ if(require(shiny)){
                 texte <- read_lines(text)
             }
 
-            max <- input$size3
-            TextDoc <- Corpus(VectorSource(texte))
 
-            #Replacing "/", "@" and "|" with space
-            toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
-            removeSpace <- content_transformer(function (x , pattern ) gsub(pattern, "", x))
-            TextDoc <- tm_map(TextDoc, toSpace, "/")
-            TextDoc <- tm_map(TextDoc, toSpace, "@")
-            TextDoc <- tm_map(TextDoc, toSpace, "\\|")
-            # Convert the text to lower case
-            TextDoc <- tm_map(TextDoc, content_transformer(tolower))
-            # Remove numbers
-            TextDoc <- tm_map(TextDoc, removeNumbers)
-            # Remove english common stopwords
-            TextDoc <- tm_map(TextDoc, removeWords, stopwords("english"))
-
-            # Remove your own stop word
-            # specify your custom stopwords as a character vector
-            TextDoc <- tm_map(TextDoc, removeWords, c("the","and","-"))
-            # Remove punctuations
-            TextDoc <- tm_map(TextDoc, removePunctuation)
-            # Eliminate extra white spaces
-            TextDoc <- tm_map(TextDoc, stripWhitespace)
-            # Eliminate spaces
-            # TextDoc <- gsub("[[:blank:]]", "", TextDoc)
-
-
-            # Build a term-document matrix
-            TextDoc_dtm <- TermDocumentMatrix(TextDoc)
-            dtm_m <- as.matrix(TextDoc_dtm)
-            # Sort by descearing value of frequency
-            dtm_v <- sort(rowSums(dtm_m),decreasing=TRUE)
-            dtm_d <- data.frame(word = names(dtm_v) ,freq=dtm_v)
-            # Display the top 20 most frequent words
-            head(dtm_d, 30)
-            dtm_d <- dtm_d %>% filter(freq >= input$size)
-
-            barplot(dtm_d[1:max,]$freq, las = 2, names.arg = dtm_d[1:max,]$word,
-                    col =brewer.pal(8, "Dark2"), main = paste("Top",max,input$fct,sep = " "),
-                    ylab = "Word frequencies")
         })
         # output$name <- renderDataTable({
 
@@ -308,8 +268,59 @@ if(require(shiny)){
             # Default Heatmap
             heatmap(data, scale="column")
         })
+        # output$decisiontree <- renderPlot({
+        #     #Loading libraries
+        #     library(rpart,quietly = TRUE)
+        #     library(caret,quietly = TRUE)
+        #     library(rpart.plot,quietly = TRUE)
+        #     library(rattle)
+        #
+        #     #Reading the data set as a dataframe
+        #     mushrooms <- read.csv ("https://drive.google.com/file/d/15UjPu68RbjRIVG5SuQ6nSMjmjyX7sN1A/view?usp=sharing")
+        #
+        #     # number of rows with missing values
+        #     nrow(mushrooms) - sum(complete.cases(mushrooms))
+        #
+        #     # deleting redundant variable `veil.type`
+        #     mushrooms$veil.type <- NULL
+        #
+        #     number.perfect.splits <- apply(X=mushrooms[-1], MARGIN = 2, FUN = function(col){
+        #         t <- table(mushrooms$class,col)
+        #         sum(t == 0)
+        #     })
+        #
+        #     # Descending order of perfect splits
+        #     order <- order(number.perfect.splits,decreasing = TRUE)
+        #     number.perfect.splits <- number.perfect.splits[order]
+        #
+        #     # Plot graph
+        #     par(mar=c(10,2,2,2))
+        #     barplot(number.perfect.splits,
+        #             main="Number of perfect splits vs feature",
+        #             xlab="",ylab="Feature",las=2,col="wheat")
+        #
+        # })
 
-
+    #     #data splicing
+    #     set.seed(12345)
+    #     train <- sample(1:nrow(mushrooms),size = ceiling(0.80*nrow(mushrooms)),replace = FALSE)
+    #     # training set
+    #     mushrooms_train <- mushrooms[train,]
+    #     # test set
+    #     mushrooms_test <- mushrooms[-train,]
+    #
+    #     # penalty matrix
+    #     penalty.matrix <- matrix(c(0,1,10,0), byrow=TRUE, nrow=2)
+    #
+    #     # building the classification tree with rpart
+    #     tree <- rpart(class~.,
+    #                   data=mushrooms_train,
+    #                   parms = list(loss = penalty.matrix),
+    #                   method = "class")
+    #
+    #     # Visualize the decision tree with rpart.plot
+    #     rpart.plot(tree, nn=TRUE)
+    # }
     }
     # Return a Shiny app object
     shinyApp(ui = ui, server = server)
