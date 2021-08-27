@@ -80,6 +80,9 @@ if(require(shiny)){
                     ),
                     tabPanel("heat",
                              plotOutput('heat')
+                    ),
+                    tabPanel("as",
+                             dataTableOutput('analyseS')
                     )
                 )
 
@@ -226,7 +229,10 @@ if(require(shiny)){
             }
             main(texte)
         })
-        output$analyseS <- renderPlot({
+        output$analyseS <- renderDataTable({
+            library(tidyverse)      # data manipulation & plotting
+            library(stringr)        # text cleaning and regular expressions
+            library(tidytext)
             if(input$fct == "demofreq"){
                 return(barplot(demoFreq$freq, las = 2, names.arg = demoFreq$word,
                                col =brewer.pal(8, "Dark2"), main = paste("Top",max,input$fct,sep = " "),
@@ -248,6 +254,70 @@ if(require(shiny)){
                 text <- input$texte
                 texte <- read_lines(text)
             }
+            main <- function(texte){
+
+                TextDoc <- Corpus(VectorSource(texte))
+
+                #Replacing "/", "@" and "|" with space
+                toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
+                removeSpace <- content_transformer(function (x , pattern ) gsub(pattern, "", x))
+                TextDoc <- tm_map(TextDoc, toSpace, "/")
+                TextDoc <- tm_map(TextDoc, toSpace, "@")
+                TextDoc <- tm_map(TextDoc, toSpace, "\\|")
+                # Convert the text to lower case
+                TextDoc <- tm_map(TextDoc, content_transformer(tolower))
+                # Remove numbers
+                TextDoc <- tm_map(TextDoc, removeNumbers)
+                # Remove english common stopwords
+                TextDoc <- tm_map(TextDoc, removeWords, stopwords("english"))
+
+                # Remove your own stop word
+                # specify your custom stopwords as a character vector
+                TextDoc <- tm_map(TextDoc, removeWords, c("the","and","-"))
+                # Remove punctuations
+                TextDoc <- tm_map(TextDoc, removePunctuation)
+                # Eliminate extra white spaces
+                TextDoc <- tm_map(TextDoc, stripWhitespace)
+                # Eliminate spaces
+                # TextDoc <- gsub("[[:blank:]]", "", TextDoc)
+
+
+                # Build a term-document matrix
+                TextDoc_dtm <- TermDocumentMatrix(TextDoc)
+                dtm_m <- as.matrix(TextDoc_dtm)
+                # Sort by descearing value of frequency
+                dtm_v <- sort(rowSums(dtm_m),decreasing=TRUE)
+                dtm_d <- data.frame(word = names(dtm_v) ,freq=dtm_v)
+                # Display the top 20 most frequent words
+                head(dtm_d, 30)
+                dtm_d <- dtm_d %>% filter(freq >= input$size)
+                #generate word cloud
+
+                wordcloud2(data = dtm_d, color = input$color, size=1,backgroundColor=input$bgc,shape=input$form)
+
+                findAssocs(TextDoc_dtm, terms = findFreqTerms(TextDoc_dtm, lowfreq = 50), corlimit = 0.25)
+                # run nrc sentiment analysis to return data frame with each row classified as one of the following
+                # emotions, rather than a score:
+                # anger, anticipation, disgust, fear, joy, sadness, surprise, trust
+                # It also counts the number of positive and negative emotions found in each row
+                d<-get_nrc_sentiment(text)
+
+                #transpose
+                td<-data.frame(t(d))
+                #The function rowSums computes column sums across rows for each level of a grouping variable.
+                td_new <- data.frame(rowSums(td[2:253]))
+                #Transformation and cleaning
+                names(td_new)[1] <- "count"
+                td_new <- cbind("sentiment" = rownames(td_new), td_new)
+                rownames(td_new) <- NULL
+                td_new2<-td_new[1:8,]
+                #Plot One - count of words associated with each sentiment
+                quickplot(sentiment, data=td_new2, weight=count, geom="bar", fill=sentiment, ylab="count")+ggtitle("Survey sentiments")
+
+
+            }
+            main(texte)
+
 
 
         })
@@ -268,6 +338,7 @@ if(require(shiny)){
             # Default Heatmap
             heatmap(data, scale="column")
         })
+        output$testDecTree <- renderPlot({
         # output$decisiontree <- renderPlot({
         #     #Loading libraries
         #     library(rpart,quietly = TRUE)
@@ -321,7 +392,9 @@ if(require(shiny)){
     #     # Visualize the decision tree with rpart.plot
     #     rpart.plot(tree, nn=TRUE)
     # }
+        })
     }
+
     # Return a Shiny app object
     shinyApp(ui = ui, server = server)
 }
