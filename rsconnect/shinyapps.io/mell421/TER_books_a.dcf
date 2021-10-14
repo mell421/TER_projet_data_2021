@@ -5,10 +5,10 @@ account: mell421
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 4235173
-bundleId: 4969878
+bundleId: 5138968
 url: https://mell421.shinyapps.io/TER_books_a/
-when: 1630033724.21984
-lastSyncTime: 1630033724.21984
+when: 1634224121.27211
+lastSyncTime: 1634224121.27211
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: .RData|data
+ignoredFiles: .RData|txt/dracula.txt|txt/prideprejudice.txt

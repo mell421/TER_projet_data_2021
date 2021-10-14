@@ -1,12 +1,7 @@
 library(shiny)
 
 if(require(shiny)){
-
-    library(wordcloud2)
-    #library('rsconnect')
     suppressWarnings(source("./fctR/sources.R"))
-    suppressWarnings(library(tidyverse))
-    library(leaflet)
 
     # Define the UI
     ui <- fluidPage(
@@ -52,17 +47,17 @@ if(require(shiny)){
 
 
                 textInput(inputId ="bgc","backgroundcolor", "black"),
-
-                selectInput("maps","maps:",
+                conditionalPanel(condition = "input.fct == 'maps'",
+                    selectInput("maps","maps:",
                             list("Nasa"="NASAGIBS.ViirsEarthAtNight2012",
                                  "Google map"="Esri.WorldImagery",
                                  "Gray"="Esri.WorldGrayCanvas",
                                  "Terrain"="Esri.WorldTerrain",
                                  "Topo Map"="Esri.WorldTopoMap"
                             )
-                ),
-                numericInput(inputId ="zoomM", 'niveau de zoom', 4),
-
+                    ),
+                    numericInput(inputId ="zoomM", 'niveau de zoom', 4),
+                )
 
 
             ),
@@ -74,15 +69,6 @@ if(require(shiny)){
                     ),
                     tabPanel("table",
                              dataTableOutput('table')
-                    ),
-                    tabPanel("maps",
-                             leafletOutput('maps')
-                    ),
-                    tabPanel("heat",
-                             plotOutput('heat')
-                    ),
-                    tabPanel("as",
-                             dataTableOutput('analyseS')
                     )
                 )
 
@@ -96,6 +82,9 @@ if(require(shiny)){
 
     # Define the server code
     server <- function(input, output) {
+        choix <- renderDataTable({
+
+        })
         output$wordcloud2 <- renderWordcloud2({
             if(input$fct == "demofreq"){
                 data <- demoFreq
@@ -123,38 +112,7 @@ if(require(shiny)){
             }
 
             main <- function(texte){
-                TextDoc <- Corpus(VectorSource(texte))
-
-                #Replacing "/", "@" and "|" with space
-                toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
-                removeSpace <- content_transformer(function (x , pattern ) gsub(pattern, "", x))
-                TextDoc <- tm_map(TextDoc, toSpace, "/")
-                TextDoc <- tm_map(TextDoc, toSpace, "@")
-                TextDoc <- tm_map(TextDoc, toSpace, "\\|")
-                # Convert the text to lower case
-                TextDoc <- tm_map(TextDoc, content_transformer(tolower))
-                # Remove numbers
-                TextDoc <- tm_map(TextDoc, removeNumbers)
-                # Remove english common stopwords
-                TextDoc <- tm_map(TextDoc, removeWords, stopwords("english"))
-
-                # Remove your own stop word
-                # specify your custom stopwords as a character vector
-                TextDoc <- tm_map(TextDoc, removeWords, c("the","and","-"))
-                # Remove punctuations
-                TextDoc <- tm_map(TextDoc, removePunctuation)
-                # Eliminate extra white spaces
-                TextDoc <- tm_map(TextDoc, stripWhitespace)
-                # Eliminate spaces
-                # TextDoc <- gsub("[[:blank:]]", "", TextDoc)
-
-
-                # Build a term-document matrix
-                TextDoc_dtm <- TermDocumentMatrix(TextDoc)
-                dtm_m <- as.matrix(TextDoc_dtm)
-                # Sort by descearing value of frequency
-                dtm_v <- sort(rowSums(dtm_m),decreasing=TRUE)
-                dtm_d <- data.frame(word = names(dtm_v) ,freq=dtm_v)
+                dtm_d <- wc(texte)
                 # Display the top 20 most frequent words
                 head(dtm_d, 30)
                 dtm_d <- dtm_d %>% filter(freq >= input$size)
@@ -188,41 +146,7 @@ if(require(shiny)){
             }
 
             main <- function(texte){
-                TextDoc <- Corpus(VectorSource(texte))
-
-                #Replacing "/", "@" and "|" with space
-                toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
-                removeSpace <- content_transformer(function (x , pattern ) gsub(pattern, "", x))
-                TextDoc <- tm_map(TextDoc, toSpace, "/")
-                TextDoc <- tm_map(TextDoc, toSpace, "@")
-                TextDoc <- tm_map(TextDoc, toSpace, "\\|")
-
-
-                # Convert the text to lower case
-                TextDoc <- tm_map(TextDoc, content_transformer(tolower))
-                # Remove numbers
-                TextDoc <- tm_map(TextDoc, removeNumbers)
-                # Remove english common stopwords
-                TextDoc <- tm_map(TextDoc, removeWords, stopwords("english"))
-                TextDoc <- tm_map(TextDoc, removeWords, stopwords("french"))
-
-                # Remove your own stop word
-                # specify your custom stopwords as a character vector
-                TextDoc <- tm_map(TextDoc, removeWords, c("the","and","-"))
-                # Remove punctuations
-                TextDoc <- tm_map(TextDoc, removePunctuation)
-                # Eliminate extra white spaces
-                TextDoc <- tm_map(TextDoc, stripWhitespace)
-                # Eliminate spaces
-                # TextDoc <- gsub("[[:blank:]]", "", TextDoc)
-
-
-                # Build a term-document matrix
-                TextDoc_dtm <- TermDocumentMatrix(TextDoc)
-                dtm_m <- as.matrix(TextDoc_dtm)
-                # Sort by descearing value of frequency
-                dtm_v <- sort(rowSums(dtm_m),decreasing=TRUE)
-                dtm_d <- data.frame(word = names(dtm_v) ,freq=dtm_v)
+                dtm_d <- wc(texte)
                 # Display the top 20 most frequent words
 
                 dtm_d %>% filter(freq >= input$size)
@@ -256,38 +180,7 @@ if(require(shiny)){
             }
             main <- function(texte){
 
-                TextDoc <- Corpus(VectorSource(texte))
-
-                #Replacing "/", "@" and "|" with space
-                toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
-                removeSpace <- content_transformer(function (x , pattern ) gsub(pattern, "", x))
-                TextDoc <- tm_map(TextDoc, toSpace, "/")
-                TextDoc <- tm_map(TextDoc, toSpace, "@")
-                TextDoc <- tm_map(TextDoc, toSpace, "\\|")
-                # Convert the text to lower case
-                TextDoc <- tm_map(TextDoc, content_transformer(tolower))
-                # Remove numbers
-                TextDoc <- tm_map(TextDoc, removeNumbers)
-                # Remove english common stopwords
-                TextDoc <- tm_map(TextDoc, removeWords, stopwords("english"))
-
-                # Remove your own stop word
-                # specify your custom stopwords as a character vector
-                TextDoc <- tm_map(TextDoc, removeWords, c("the","and","-"))
-                # Remove punctuations
-                TextDoc <- tm_map(TextDoc, removePunctuation)
-                # Eliminate extra white spaces
-                TextDoc <- tm_map(TextDoc, stripWhitespace)
-                # Eliminate spaces
-                # TextDoc <- gsub("[[:blank:]]", "", TextDoc)
-
-
-                # Build a term-document matrix
-                TextDoc_dtm <- TermDocumentMatrix(TextDoc)
-                dtm_m <- as.matrix(TextDoc_dtm)
-                # Sort by descearing value of frequency
-                dtm_v <- sort(rowSums(dtm_m),decreasing=TRUE)
-                dtm_d <- data.frame(word = names(dtm_v) ,freq=dtm_v)
+                dtm_d <- wc(texte)
                 # Display the top 20 most frequent words
                 head(dtm_d, 30)
                 dtm_d <- dtm_d %>% filter(freq >= input$size)
